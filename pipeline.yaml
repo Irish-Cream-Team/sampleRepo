@@ -1,0 +1,130 @@
+trigger: none
+
+variables:
+- group: # CHANGE
+- name: namespace
+  value: # CHANGE
+
+stages:
+- stage: dev
+  displayName: dev stage
+  jobs:
+
+  - deployment: job_dev
+    displayName: job dev
+    environment: 'dev'
+    pool:
+      vmImage: ubuntu-latest
+    
+    variables:
+    - name: environment
+      value: dev
+
+    strategy:
+     runOnce:
+       deploy:
+        steps:
+        - checkout: self
+        - task: CmdLine@2
+          displayName: install helmfile
+          inputs:
+            script: |
+              curl -L https://github.com/roboll/helmfile/releases/download/v0.135.0/helmfile_linux_amd64 > helmfile
+              chmod +x helmfile
+        - task: Kubernetes@1
+          displayName: kubectl login
+          inputs:
+            connectionType: 'Kubernetes Service Connection'
+            kubernetesServiceEndpoint: $(environment)
+            namespace: '$(namespace)'
+            command: 'login'
+        - task: CmdLine@2
+          displayName: helmfile sync
+          env:
+            HARBOR_PASSWORD: $(harbor_pass)
+          inputs:
+            script: |
+              echo ------
+              ./helmfile --environment $(environment) --file helmfile.yaml sync
+
+- stage: preprod
+  displayName: preprod stage
+  jobs:
+
+  - deployment: preprod
+    displayName: job preprod
+    environment: 'preprod'
+    pool:
+      vmImage: ubuntu-latest
+    
+    variables:
+    - name: environment
+      value: preprod
+
+    strategy:
+     runOnce:
+       deploy:
+        steps:
+        - checkout: self
+        - task: CmdLine@2
+          displayName: install helmfile
+          inputs:
+            script: |
+              curl -L https://github.com/roboll/helmfile/releases/download/v0.135.0/helmfile_linux_amd64 > helmfile
+              chmod +x helmfile
+        - task: Kubernetes@1
+          displayName: kubectl login
+          inputs:
+            connectionType: 'Kubernetes Service Connection'
+            kubernetesServiceEndpoint: $(environment)
+            namespace: '$(namespace)'
+            command: 'login'
+        - task: CmdLine@2
+          displayName: helmfile sync
+          env:
+            HARBOR_PASSWORD: $(harbor_pass)
+          inputs:
+            script: |
+              echo ------
+              ./helmfile --environment $(environment) --file helmfile.yaml sync
+
+- stage: prod
+  displayName: prod stage
+  jobs:
+
+  - deployment: prod
+    displayName: job prod
+    environment: 'prod'
+    pool:
+      vmImage: ubuntu-latest
+    
+    variables:
+    - name: environment
+      value: prod
+
+    strategy:
+     runOnce:
+       deploy:
+        steps:
+        - checkout: self
+        - task: CmdLine@2
+          displayName: install helmfile
+          inputs:
+            script: |
+              curl -L https://github.com/roboll/helmfile/releases/download/v0.135.0/helmfile_linux_amd64 > helmfile
+              chmod +x helmfile
+        - task: Kubernetes@1
+          displayName: kubectl login
+          inputs:
+            connectionType: 'Kubernetes Service Connection'
+            kubernetesServiceEndpoint: $(environment)
+            namespace: '$(namespace)'
+            command: 'login'
+        - task: CmdLine@2
+          displayName: helmfile sync
+          env:
+            HARBOR_PASSWORD: $(harbor_pass)
+          inputs:
+            script: |
+              echo ------
+              ./helmfile --environment $(environment) --file helmfile.yaml sync
